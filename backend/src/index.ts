@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { testConnection } from './config/database';
+import { initializeDatabase } from './config/init-db';
+import authRoutes from './routes/auth';
 
 dotenv.config();
 
@@ -39,12 +41,21 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
+// Auth routes
+app.use('/api/auth', authRoutes);
+
 // Start server
 const startServer = async () => {
-  // Test database connection but don't fail if it's not available
+  // Test database connection and initialize tables
   try {
     await testConnection();
     console.log('✅ Database connected successfully');
+    
+    try {
+      await initializeDatabase();
+    } catch (error) {
+      console.warn('⚠️  Database initialization warning:', error instanceof Error ? error.message : 'Unknown error');
+    }
   } catch (error) {
     console.warn('⚠️  Database connection failed, but server will continue:');
     console.warn('   ', error instanceof Error ? error.message : 'Unknown error');
